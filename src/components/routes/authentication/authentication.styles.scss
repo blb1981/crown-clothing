@@ -1,0 +1,14 @@
+.authentication-container {
+  display: flex;
+  margin: 4rem auto;
+  // background-color: red;
+  justify-content: center;
+  gap: 4rem;
+}
+
+@media (max-width: 800px) {
+  .authentication-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
