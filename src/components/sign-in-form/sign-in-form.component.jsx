@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
+
+import { UserContext } from '../../contexts/user.context'
 
 import FormInput from '../form-input/form-input.component'
 
@@ -20,6 +22,8 @@ const SignInForm = () => {
   const [formFields, setFormFields] = useState(defaultFormFields)
   const { email, password } = formFields
 
+  const { setcurrentUser } = useContext(UserContext)
+
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormFields({ ...formFields, [name]: value })
@@ -29,17 +33,25 @@ const SignInForm = () => {
     setFormFields(defaultFormFields)
   }
 
-  const signInWithGoogle = async () => {
+  /**======================
+   *    Sign in with Google
+   *========================**/
+  const handleSignInWithGoogle = async () => {
     const { user } = await signInWithGooglePopup()
     await createUserDocumentFromAuth(user)
+    setcurrentUser(user)
   }
 
-  const handleSubmit = async (event) => {
+  /**======================
+   *    Sign in with email/password
+   *========================**/
+  const handleEmailAndPasswordSubmit = async (event) => {
     event.preventDefault()
 
     try {
-      const response = await signInAuthUserWithEmailAndPassword(email, password)
-      console.log(response)
+      const { user } = await signInAuthUserWithEmailAndPassword(email, password)
+      console.log(user)
+      setcurrentUser(user)
       resetFormFields()
     } catch (error) {
       console.log(error.code)
@@ -62,7 +74,7 @@ const SignInForm = () => {
       <h2>Already Have An Account?</h2>
       <span>Sign in with email and password!</span>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleEmailAndPasswordSubmit}>
         <FormInput
           label='Email Address'
           type='email'
@@ -83,7 +95,11 @@ const SignInForm = () => {
 
         <div className='buttons-container'>
           <Button type='submit'>Sign In</Button>
-          <Button type='button' buttonType='google' onClick={signInWithGoogle}>
+          <Button
+            type='button'
+            buttonType='google'
+            onClick={handleSignInWithGoogle}
+          >
             Sign In With Google
           </Button>
         </div>
