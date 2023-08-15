@@ -1,7 +1,8 @@
 .cart-dropdown-container {
   position: absolute;
   width: 240px;
-  height: 340px;
+  // height: 340px;
+  height: auto;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -10,6 +11,7 @@
   top: 90px;
   right: 40px;
   z-index: 5;
+  overflow-x: scroll;
 
   .empty-message {
     font-size: 18px;
