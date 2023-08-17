@@ -1,10 +1,11 @@
-import { createContext, useState } from 'react'
+import { createContext, useState, useEffect } from 'react'
 
 export const CartContext = createContext({
   isCartOpen: false,
   setIsCartOpen: () => {},
   cartItems: [],
   addItemToCart: () => {},
+  cartCount: 0,
 })
 
 // Helper function to determine the logic of adding items to cart
@@ -30,6 +31,14 @@ const addCartItem = (cartItems, productToAdd) => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
+
+  useEffect(() => {
+    const newCartCount = cartItems.reduce((total, cartItem) => {
+      return total + cartItem.quantity
+    }, 0)
+    setCartCount(newCartCount)
+  }, [cartItems])
 
   const addItemToCart = (productToAdd) => {
     setCartItems(addCartItem(cartItems, productToAdd))
@@ -40,6 +49,7 @@ export const CartProvider = ({ children }) => {
     setIsCartOpen,
     cartItems,
     addItemToCart,
+    cartCount,
   }
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
