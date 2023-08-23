@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useReducer } from 'react'
 
 export const CartContext = createContext({
   isCartOpen: false,
@@ -11,14 +11,39 @@ export const CartContext = createContext({
   totalPrice: 0,
 })
 
-// Helper function to determine the logic of adding items to cart
+export const CART_ACTION_TYPES = {
+  SET_CART_ITEMS: 'SET_CART_ITEMS',
+  SET_IS_CART_OPEN: 'SET_IS_CART_OPEN',
+}
+
+const INITIAL_STATE = {
+  isCartOpen: false,
+  cartItems: [],
+  cartCount: 0,
+  totalPrice: 0,
+}
+
+const cartReducer = (state, action) => {
+  const { type, payload } = action
+
+  switch (type) {
+    case CART_ACTION_TYPES.SET_CART_ITEMS:
+      return {
+        ...state,
+        ...payload,
+      }
+    case CART_ACTION_TYPES.SET_IS_CART_OPEN:
+      return { ...state, isCartOpen: payload }
+    default:
+      throw new Error(`Unhandled type ${type} in cartReducer`)
+  }
+}
+
 const addCartItem = (cartItems, productToAdd) => {
-  // See if cartitems has product to add already in it
   const existingCartItem = cartItems.find(
     (cartItem) => cartItem.id === productToAdd.id
   )
 
-  // If found, increment quantity
   if (existingCartItem) {
     return cartItems.map((cartItem) => {
       return cartItem.id === productToAdd.id
@@ -27,23 +52,18 @@ const addCartItem = (cartItems, productToAdd) => {
     })
   }
 
-  // Return new array with modified items or new items
   return [...cartItems, { ...productToAdd, quantity: 1 }]
 }
 
-// Helper function to remove cart item
 const removeCartItemHelper = (cartItems, productToRemove) => {
-  // Find the item
   const existingCartItem = cartItems.find(
     (cartItem) => cartItem.id === productToRemove.id
   )
 
-  // Check if quantity is equal to 1. If so, remove from cart altogether
   if (existingCartItem.quantity === 1) {
     return cartItems.filter((cartItem) => cartItem.id !== productToRemove.id)
   }
 
-  // Return array of cartItems with modified quantity
   return cartItems.map((cartItem) => {
     return cartItem.id === productToRemove.id
       ? { ...cartItem, quantity: cartItem.quantity - 1 }
@@ -56,35 +76,45 @@ const clearItemFromCartHelper = (cartItems, cartItemToClear) => {
 }
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([])
-  const [isCartOpen, setIsCartOpen] = useState(false)
-  const [cartCount, setCartCount] = useState(0)
-  const [totalPrice, setTotalPrice] = useState(0)
+  const [{ cartItems, isCartOpen, cartCount, totalPrice }, dispatch] =
+    useReducer(cartReducer, INITIAL_STATE)
 
-  useEffect(() => {
+  const updateCartItemsReducer = (newCartItems) => {
     const newCartCount = cartItems.reduce((total, cartItem) => {
       return total + cartItem.quantity
     }, 0)
-    setCartCount(newCartCount)
-  }, [cartItems])
 
-  useEffect(() => {
     const newTotal = cartItems.reduce((total, cartitem) => {
       return total + cartitem.quantity * cartitem.price
     }, 0)
-    setTotalPrice(newTotal)
-  }, [cartItems])
+
+    dispatch({
+      type: CART_ACTION_TYPES.SET_CART_ITEMS,
+      payload: {
+        cartItems: newCartItems,
+        totalPrice: newTotal,
+        cartCount: newCartCount,
+      },
+    })
+  }
 
   const addItemToCart = (productToAdd) => {
-    setCartItems(addCartItem(cartItems, productToAdd))
+    const newCartItems = addCartItem(cartItems, productToAdd)
+    updateCartItemsReducer(newCartItems)
   }
 
   const removeCartItem = (productToRemove) => {
-    setCartItems(removeCartItemHelper(cartItems, productToRemove))
+    const newCartItems = removeCartItemHelper(cartItems, productToRemove)
+    updateCartItemsReducer(newCartItems)
   }
 
   const clearItemFromCart = (cartItemToClear) => {
-    setCartItems(clearItemFromCartHelper(cartItems, cartItemToClear))
+    const newCartItems = clearItemFromCartHelper(cartItems, cartItemToClear)
+    updateCartItemsReducer(newCartItems)
+  }
+
+  const setIsCartOpen = (bool) => {
+    dispatch({ type: CART_ACTION_TYPES.SET_IS_CART_OPEN, payload: bool })
   }
 
   const value = {

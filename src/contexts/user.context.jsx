@@ -1,27 +1,50 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useEffect, useReducer } from 'react'
 
 import {
   onAuthStateChangedListener,
   createUserDocumentFromAuth,
 } from '../utils/firebase.utils'
 
-/**======================
- *    Actual value
- *========================**/
 export const UserContext = createContext({
   currentUser: null,
   setcurrentUser: () => null,
 })
 
-/**======================
- *    React component
- *========================**/
-export const UserProvider = ({ children }) => {
-  // Use the state hook to set the initial state
-  const [currentUser, setcurrentUser] = useState(null)
+export const USER_ACTION_TYPES = {
+  SET_CURRENT_USER: 'SET_CURRENT_USER',
+}
 
-  // Put the hook value and setter function in an object
-  // This is passed down in the context component so it is accessible to children
+const userReducer = (state, action) => {
+  console.log('dispatched')
+  console.log({ action })
+  const { type, payload } = action
+
+  switch (type) {
+    case USER_ACTION_TYPES.SET_CURRENT_USER:
+      return {
+        ...state,
+        currentUser: payload,
+      }
+    default:
+      throw new Error(`Unhandled type ${type}`)
+  }
+}
+
+const INITIAL_STATE = {
+  currentUser: null,
+}
+
+export const UserProvider = ({ children }) => {
+  // const [currentUser, setcurrentUser] = useState(null)
+  const [state, dispatch] = useReducer(userReducer, INITIAL_STATE)
+
+  const { currentUser } = state
+  console.log({ currentUser })
+
+  const setcurrentUser = (user) => {
+    dispatch({ type: USER_ACTION_TYPES.SET_CURRENT_USER, payload: user })
+  }
+
   const value = { currentUser, setcurrentUser }
 
   useEffect(() => {
